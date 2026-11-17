@@ -1,0 +1,1162 @@
+```html
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Un mundo de mapas. Infinitas maravillas. | Atlas Interactivo de Geografía</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Tipografía de expedición/geométrica para títulos y Plus Jakarta Sans para lectura -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"Chakra Petch"', 'sans-serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            forest: { 50: '#f0fdf4', 100: '#dcfce7', 600: '#16a34a', 700: '#15803d', 800: '#166534', 900: '#14532d' },
+            ocean: { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 900: '#0c4a6e' },
+            terracotta: { 50: '#fff7ed', 100: '#ffedd5', 500: '#f97316', 600: '#ea580c', 700: '#c2410c', 800: '#9a3412' },
+            sand: { 50: '#faf8f5', 100: '#f3efe6', 200: '#e6dec8', 800: '#3f3a2e', 900: '#27241d' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Patrón topográfico sutil de fondo */
+    .topo-bg {
+      background-image: radial-gradient(circle at 2px 2px, rgba(22, 101, 52, 0.12) 1px, transparent 0);
+      background-size: 28px 28px;
+    }
+    .dark .topo-bg {
+      background-image: radial-gradient(circle at 2px 2px, rgba(56, 189, 248, 0.12) 1px, transparent 0);
+    }
+
+    /* Animaciones suaves respetando reducir movimiento */
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.75; filter: drop-shadow(0 0 4px rgba(14,165,233,0.4)); }
+      50% { opacity: 1; filter: drop-shadow(0 0 12px rgba(14,165,233,0.85)); }
+    }
+    @keyframes spinCompass {
+      0% { transform: rotate(0deg); }
+      25% { transform: rotate(8deg); }
+      75% { transform: rotate(-6deg); }
+      100% { transform: rotate(0deg); }
+    }
+    .anim-float { animation: floatSlow 5s ease-in-out infinite; }
+    .anim-glow { animation: pulseGlow 3.5s ease-in-out infinite; }
+    .anim-compass { animation: spinCompass 8s ease-in-out infinite; transform-origin: center; }
+
+    .reduce-motion *, .reduce-motion *::before, .reduce-motion *::after {
+      animation: none !important;
+      transition: none !important;
+      scroll-behavior: auto !important;
+    }
+
+    /* Transición cielo día/noche en portada */
+    .hero-sky-day {
+      background: linear-gradient(180deg, #0284c7 0%, #38bdf8 48%, #bae6fd 82%, #fef3c7 100%);
+    }
+    .hero-sky-night {
+      background: linear-gradient(180deg, #020617 0%, #0f172a 50%, #1e1b4b 82%, #134e4a 100%);
+    }
+
+    /* Barra de desplazamiento estilizada */
+    ::-webkit-scrollbar { width: 9px; height: 9px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
+    ::-webkit-scrollbar-thumb { background: #15803d; border-radius: 9999px; }
+    .dark ::-webkit-scrollbar-thumb { background: #0284c7; }
+  </style>
+</head>
+<body class="bg-sand-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 font-sans antialiased topo-bg transition-colors duration-300">
+
+  <!-- Barra de Navegación Superior -->
+  <header class="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-sand-200 dark:border-slate-800 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-wrap items-center justify-between gap-3 py-3">
+        <!-- Marca -->
+        <a href="#inicio" class="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-forest-600 rounded-xl p-1">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-forest-700 to-ocean-600 flex items-center justify-center text-white shadow-md">
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/>
+              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor" fill-opacity="0.3"/>
+            </svg>
+          </div>
+          <div>
+            <span class="font-display font-bold text-lg tracking-tight text-forest-900 dark:text-sky-300 block leading-none">TERRA ATLAS</span>
+            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Guía Interactiva de Geografía</span>
+          </div>
+        </a>
+
+        <!-- Buscador en tiempo real -->
+        <div class="relative flex-1 max-w-md min-w-[200px]">
+          <label for="globalSearch" class="sr-only">Buscar en todo el atlas</label>
+          <input id="globalSearch" type="search" placeholder="Buscar relieves, minerales, biomas, glosario..."
+            class="w-full pl-9 pr-4 py-2 text-sm rounded-xl bg-sand-100 dark:bg-slate-800 border border-sand-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-ocean-500 transition" />
+          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+          </svg>
+          <!-- Resultados rápidos desplegables -->
+          <div id="searchResultsBox" class="hidden absolute left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 max-h-80 overflow-y-auto z-50 p-2"></div>
+        </div>
+
+        <!-- Controles globales: Favoritos, Sonido, Animaciones, Tema -->
+        <div class="flex items-center gap-1.5 sm:gap-2">
+          <button id="btnOpenFavs" type="button" title="Mi Atlas Guardado (Favoritos)"
+            class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-terracotta-100 text-terracotta-800 dark:bg-terracotta-800/40 dark:text-orange-200 hover:bg-terracotta-200 transition">
+            <span>★</span>
+            <span class="hidden sm:inline">Favoritos</span>
+            <span id="favCountBadge" class="px-1.5 py-0.5 text-[11px] rounded-full bg-terracotta-600 text-white">0</span>
+          </button>
+
+          <button id="btnToggleSound" type="button" aria-pressed="false" title="Activar/Desactivar sonidos cartográficos"
+            class="p-2 rounded-xl bg-sand-100 dark:bg-slate-800 hover:bg-sand-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition" aria-label="Alternar sonidos ambientales">
+            <span id="soundIcon" class="text-sm">🔇</span>
+          </button>
+
+          <button id="btnToggleMotion" type="button" aria-pressed="false" title="Reducir animaciones"
+            class="p-2 rounded-xl bg-sand-100 dark:bg-slate-800 hover:bg-sand-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition text-xs font-bold" aria-label="Reducir animaciones">
+            ⚡
+          </button>
+
+          <button id="btnToggleTheme" type="button" title="Cambiar modo claro/oscuro"
+            class="p-2 rounded-xl bg-ocean-100 dark:bg-slate-800 text-ocean-900 dark:text-amber-300 hover:bg-ocean-200 transition" aria-label="Cambiar modo claro u oscuro">
+            <span id="themeIcon">🌙</span>
+          </button>
+
+          <button id="btnMobileMenu" type="button" class="lg:hidden p-2 rounded-xl bg-forest-700 text-white" aria-label="Abrir menú de navegación">
+            ☰
+          </button>
+        </div>
+      </div>
+
+      <!-- Menú de navegación por secciones -->
+      <nav id="mainNav" aria-label="Secciones principales" class="hidden lg:flex flex-wrap items-center gap-1 pb-2.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+        <a href="#que-es" class="px-2.5 py-1.5 rounded-lg hover:bg-forest-100 dark:hover:bg-slate-800 hover:text-forest-800 dark:hover:text-sky-300 transition">1. ¿Qué es?</a>
+        <a href="#primera-expedicion" class="px-2.5 py-1.5 rounded-lg hover:bg-forest-100 dark:hover:bg-slate-800 hover:text-forest-800 dark:hover:text-sky-300 transition">2. 1ª Expedición</a>
+        <a href="#minerales" class="px-2.5 py-1.5 rounded-lg hover:bg-forest-100 dark:hover:bg-slate-800 hover:text-forest-800 dark:hover:text-sky-300 transition">3. Recursos</a>
+        <a href="#instrumentos" class="px-2.5 py-1.5 rounded-lg hover:bg-forest-100 dark:hover:bg-slate-800 hover:text-forest-800 dark:hover:text-sky-300 transition">4. Instrumentos</a>
+        <a href="#biomas" class="px-2.5 py-1.5 rounded-lg hover:bg-forest-100 dark:hover:bg-slate-800 hover:text-forest-800 dark:hover:text-sky-300 transition">5. Biomas y Esferas</a>
+        <a href="#maravillas" class="px-2.5 py-1.5 rounded-lg hover:bg-forest-100 dark:hover:bg-slate-800 hover:text-forest-800 dark:hover:text-sky-300 transition">6. Maravillas</a>
+        <a href="#poblacion" class="px-2.5 py-1.5 rounded-lg hover:bg-forest-100 dark:hover:bg-slate-800 hover:text-forest-800 dark:hover:text-sky-300 transition">7. Culturas</a>
+        <a href="#urbanismo" class="px-2.5 py-1.5 rounded-lg hover:bg-forest-100 dark:hover:bg-slate-800 hover:text-forest-800 dark:hover:text-sky-300 transition">8. Urbanismo</a>
+        <a href="#agricultura" class="px-2.5 py-1.5 rounded-lg hover:bg-forest-100 dark:hover:bg-slate-800 hover:text-forest-800 dark:hover:text-sky-300 transition">9. Clima y Cultivos</a>
+        <a href="#sig-simulador" class="px-2.5 py-1.5 rounded-lg bg-ocean-100/80 dark:bg-ocean-900/50 text-ocean-800 dark:text-sky-300 hover:bg-ocean-200 transition">10. Mapa SIG</a>
+        <a href="#historia" class="px-2.5 py-1.5 rounded-lg hover:bg-forest-100 dark:hover:bg-slate-800 transition">11. Historia</a>
+        <a href="#aprender-jugando" class="px-2.5 py-1.5 rounded-lg bg-forest-100 dark:bg-forest-900/50 text-forest-800 dark:text-emerald-300 hover:bg-forest-200 transition">12. Juegos</a>
+        <a href="#faq-glosario" class="px-2.5 py-1.5 rounded-lg hover:bg-forest-100 dark:hover:bg-slate-800 transition">13. FAQ y Glosario</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="inicio">
+    <!-- 2. PORTADA QUE INVITA A EXPLORAR -->
+    <section class="relative overflow-hidden border-b border-sand-200 dark:border-slate-800">
+      <div id="heroSky" class="hero-sky-day transition-all duration-700 pt-10 pb-16 sm:pt-14 sm:pb-24 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto grid lg:grid-cols-12 gap-8 items-center">
+          <!-- Texto principal portada -->
+          <div class="lg:col-span-7 z-10 bg-white/85 dark:bg-slate-900/85 backdrop-blur-md p-6 sm:p-10 rounded-3xl shadow-xl border border-white/60 dark:border-slate-700">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+              <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-forest-100 text-forest-800 dark:bg-forest-900/70 dark:text-emerald-300">
+                🌍 Edición Atlas Global 2026 • Ciencia y Exploración
+              </span>
+              <!-- Control Día / Noche de paisaje -->
+              <button id="btnHeroDayNight" type="button"
+                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-ocean-600 text-white hover:bg-ocean-700 shadow transition">
+                <span id="skyModeLabel">☀️ Vista Diurna (Cambiar a Noche)</span>
+              </button>
+            </div>
+
+            <h1 class="font-display text-3xl sm:text-5xl font-bold text-slate-900 dark:text-white leading-tight mb-4">
+              Un mundo de mapas. <span class="text-forest-700 dark:text-emerald-400">Infinitas maravillas.</span>
+            </h1>
+
+            <p class="text-base sm:text-lg text-slate-700 dark:text-slate-300 leading-relaxed mb-6">
+              La geografía es la llave para leer el planeta Tierra como un libro abierto: te permite <strong>explorar relieves milenarios</strong>, <strong>comprender los climas</strong>, <strong>analizar recursos naturales</strong>, <strong>descubrir culturas humanas</strong> y <strong>orientarte en cualquier rincón del mundo</strong>.
+            </p>
+
+            <!-- 3 Botones funcionales exigidos -->
+            <div class="flex flex-wrap gap-3">
+              <a href="#primera-expedicion" data-sound="click"
+                class="px-5 py-3 rounded-2xl font-bold text-sm bg-forest-700 hover:bg-forest-800 text-white shadow-lg shadow-forest-700/25 transition flex items-center gap-2">
+                <span>🧭</span> Soy principiante
+              </a>
+              <a href="#minerales" data-sound="click"
+                class="px-5 py-3 rounded-2xl font-bold text-sm bg-ocean-600 hover:bg-ocean-700 text-white shadow-lg shadow-ocean-600/25 transition flex items-center gap-2">
+                <span>🗺️</span> Explorar el atlas
+              </a>
+              <a href="#aprender-jugando" onclick="switchGameTab('perfil')" data-sound="click"
+                class="px-5 py-3 rounded-2xl font-bold text-sm bg-terracotta-600 hover:bg-terracotta-700 text-white shadow-lg shadow-terracotta-600/25 transition flex items-center gap-2">
+                <span>🔭</span> Descubrí tu perfil de explorador
+              </a>
+            </div>
+          </div>
+
+          <!-- Ilustración SVG rica y detallada de relieves, ríos, costas y rosa de los vientos -->
+          <div class="lg:col-span-5 z-10">
+            <div class="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white/80 dark:border-slate-700 bg-sky-100 dark:bg-slate-900">
+              <svg id="heroLandscapeSvg" viewBox="0 0 600 440" class="w-full h-auto block" role="img" aria-label="Ilustración topográfica de montañas nevadas, bosque, río meándrico desembocando en el océano y rosa de los vientos">
+                <defs>
+                  <linearGradient id="mountainGrad1" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#475569"/>
+                    <stop offset="100%" stop-color="#1e293b"/>
+                  </linearGradient>
+                  <linearGradient id="mountainGrad2" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#64748b"/>
+                    <stop offset="100%" stop-color="#334155"/>
+                  </linearGradient>
+                  <linearGradient id="valleyGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#22c55e"/>
+                    <stop offset="60%" stop-color="#15803d"/>
+                    <stop offset="100%" stop-color="#14532d"/>
+                  </linearGradient>
+                  <linearGradient id="oceanGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#0284c7"/>
+                    <stop offset="100%" stop-color="#0c4a6e"/>
+                  </linearGradient>
+                </defs>
+
+                <!-- Sol / Luna y Estrellas -->
+                <g id="skyStars" opacity="0">
+                  <circle cx="80" cy="50" r="2" fill="#fff"/>
+                  <circle cx="150" cy="35" r="1.5" fill="#fef08a"/>
+                  <circle cx="240" cy="65" r="2.2" fill="#fff"/>
+                  <circle cx="330" cy="30" r="1.8" fill="#bae6fd"/>
+                  <circle cx="420" cy="55" r="2" fill="#fff"/>
+                  <path d="M40 90 Q180 40 340 85 T560 60" fill="none" stroke="#34d399" stroke-width="6" opacity="0.25"/>
+                </g>
+                <circle id="celestialBody" cx="485" cy="78" r="34" fill="#fde047" class="anim-float"/>
+
+                <!-- Cordillera trasera -->
+                <polygon points="0,240 95,105 190,220 295,85 410,230 510,130 600,225 600,320 0,320" fill="url(#mountainGrad2)"/>
+                <!-- Cumbres nevadas -->
+                <polygon points="95,105 68,143 85,138 95,150 107,136 122,143" fill="#f8fafc"/>
+                <polygon points="295,85 260,132 280,126 295,142 312,125 330,133" fill="#f8fafc"/>
+                <polygon points="510,130 486,162 500,158 510,168 521,157 535,162" fill="#f8fafc"/>
+
+                <!-- Cordillera media terracota -->
+                <polygon points="-20,260 145,155 270,255 425,165 610,265 610,360 -20,360" fill="#9a3412" opacity="0.88"/>
+
+                <!-- Llanura y colinas verdes -->
+                <path d="M0,255 Q160,220 320,255 T600,245 L600,440 L0,440 Z" fill="url(#valleyGrad)"/>
+
+                <!-- Curvas de nivel topográficas decorativas -->
+                <path d="M25,280 Q150,255 280,285 T540,275" fill="none" stroke="#bbf7d0" stroke-width="1.2" stroke-dasharray="6 4" opacity="0.55"/>
+                <path d="M10,315 Q170,290 310,320 T570,305" fill="none" stroke="#bbf7d0" stroke-width="1.2" stroke-dasharray="6 4" opacity="0.45"/>
+
+                <!-- Costa y Océano -->
+                <path d="M0,350 Q190,335 330,365 T600,355 L600,440 L0,440 Z" fill="#fde68a"/>
+                <path d="M0,364 Q190,348 330,378 T600,368 L600,440 L0,440 Z" fill="url(#oceanGrad)"/>
+
+                <!-- Río meándrico desde el glaciar hasta el delta -->
+                <path d="M295,142 C275,180 325,205 280,240 C235,275 335,295 275,335 C245,355 265,368 260,375"
+                      fill="none" stroke="#38bdf8" stroke-width="9" stroke-linecap="round"/>
+                <path d="M295,142 C275,180 325,205 280,240 C235,275 335,295 275,335 C245,355 265,368 260,375"
+                      fill="none" stroke="#e0f2fe" stroke-width="2.5" stroke-dasharray="8 8" stroke-linecap="round"/>
+
+                <!-- Bosque estilizado -->
+                <g fill="#064e3b">
+                  <polygon points="75,270 63,298 87,298"/><polygon points="98,278 86,306 110,306"/>
+                  <polygon points="122,268 110,296 134,296"/><polygon points="445,272 433,300 457,300"/>
+                  <polygon points="472,265 460,295 484,295"/><polygon points="498,278 486,306 510,306"/>
+                </g>
+
+                <!-- Rosa de los vientos en esquina inferior derecha -->
+                <g transform="translate(520, 375)" class="anim-compass">
+                  <circle cx="0" cy="0" r="42" fill="#0f172a" fill-opacity="0.78" stroke="#f8fafc" stroke-width="1.5"/>
+                  <polygon points="0,-34 7,-7 0,0 -7,-7" fill="#ef4444"/>
+                  <polygon points="0,34 7,7 0,0 -7,7" fill="#f8fafc"/>
+                  <polygon points="34,0 7,7 0,0 7,-7" fill="#cbd5e1"/>
+                  <polygon points="-34,0 -7,7 0,0 -7,-7" fill="#cbd5e1"/>
+                  <text x="0" y="-21" text-anchor="middle" fill="#fef08a" font-size="10" font-weight="bold">N</text>
+                  <text x="0" y="29" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">S</text>
+                  <text x="24" y="3" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">E</text>
+                  <text x="-24" y="3" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">O</text>
+                </g>
+
+                <!-- Etiqueta coordenadas portada -->
+                <rect x="16" y="392" width="215" height="30" rx="8" fill="#0f172a" fill-opacity="0.78"/>
+                <text x="28" y="411" fill="#7dd3fc" font-size="11" font-family="monospace">LAT 32°39'S • LON 70°00'O • 4.200m</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTENEDOR PRINCIPAL DE SECCIONES -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-20">
+
+      <!-- 3. ¿QUÉ ES LA GEOGRAFÍA? -->
+      <section id="que-es" class="scroll-mt-24">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-forest-700 dark:text-emerald-400">Fundamentos del Planeta</span>
+            <h2 class="font-display text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mt-1">¿Qué es la Geografía?</h2>
+          </div>
+          <p class="text-sm text-slate-600 dark:text-slate-400 max-w-xl">
+            Mucho más que memorizar capitales: es la ciencia que estudia la superficie terrestre, las sociedades que la habitan y cómo interactúan entre sí.
+          </p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-md border border-sand-200 dark:border-slate-800 mb-8">
+          <p class="text-slate-700 dark:text-slate-300 leading-relaxed text-base mb-6">
+            El espacio terrestre se organiza mediante la combinación de <strong>factores naturales</strong> (placas tectónicas, altitud, latitud, corrientes marinas y circulación atmosférica) y <strong>factores humanos</strong> (ciudades, rutas comerciales, agricultura y cultura). Por eso, ningún lugar de la Tierra es idéntico a otro: una variación de pocos grados de latitud o de 1.000 metros de altitud transforma por completo el paisaje y la vida.
+          </p>
+
+          <!-- 4 Ramas Principales -->
+          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="p-5 rounded-2xl bg-forest-50 dark:bg-forest-900/20 border border-forest-200 dark:border-forest-800">
+              <div class="text-2xl mb-2">🏔️</div>
+              <h3 class="font-display font-bold text-lg text-forest-900 dark:text-emerald-300">Geografía Física</h3>
+              <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">Analiza el relieve (geomorfología), los climas (climatología), las aguas (hidrografía) y la distribución de seres vivos (biogeografía).</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-terracotta-50 dark:bg-orange-950/30 border border-terracotta-200 dark:border-orange-900">
+              <div class="text-2xl mb-2">🏙️</div>
+              <h3 class="font-display font-bold text-lg text-terracotta-800 dark:text-orange-300">Geografía Humana</h3>
+              <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">Estudia la población, las migraciones, el crecimiento urbano, las actividades económicas y la organización política de los territorios.</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-ocean-50 dark:bg-sky-950/30 border border-ocean-200 dark:border-sky-900">
+              <div class="text-2xl mb-2">🛰️</div>
+              <h3 class="font-display font-bold text-lg text-ocean-900 dark:text-sky-300">Cartografía y SIG</h3>
+              <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">Ciencia y técnica de representar la Tierra en mapas, analizar datos georreferenciados y observar el planeta desde satélites.</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900">
+              <div class="text-2xl mb-2">🌱</div>
+              <h3 class="font-display font-bold text-lg text-amber-900 dark:text-amber-300">Geografía Ambiental</h3>
+              <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">Investiga el vínculo entre sociedad y naturaleza: gestión de recursos, riesgos naturales, cambio climático y sostenibilidad.</p>
+            </div>
+          </div>
+
+          <!-- Tabla Comparativa: Cartografía Tradicional vs. Cartografía Digital (SIG y Teledetección) -->
+          <h3 class="font-display font-bold text-xl text-slate-900 dark:text-white mb-3">Cartografía Tradicional vs. Cartografía Digital (SIG y Teledetección)</h3>
+          <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
+                <tr>
+                  <th class="p-3.5 font-bold">Aspecto</th>
+                  <th class="p-3.5 font-bold">Cartografía Tradicional (Papel)</th>
+                  <th class="p-3.5 font-bold">Cartografía Digital (SIG / Satélites)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                <tr>
+                  <td class="p-3.5 font-semibold">Soporte y Escala</td>
+                  <td class="p-3.5">Fijo en papel; la escala no cambia sin imprimir otro mapa.</td>
+                  <td class="p-3.5">Dinámico e interactivo; permite hacer zoom continuo desde un barrio hasta todo el globo.</td>
+                </tr>
+                <tr>
+                  <td class="p-3.5 font-semibold">Capas de Información</td>
+                  <td class="p-3.5">Todas las variables (ríos, rutas, alturas) están impresas juntas.</td>
+                  <td class="p-3.5">Capas independientes (relieve, clima, población) que se activan y cruzan matemáticamente.</td>
+                </tr>
+                <tr>
+                  <td class="p-3.5 font-semibold">Actualización</td>
+                  <td class="p-3.5">Lenta; requiere nuevas ediciones impresas tras años de relevamiento.</td>
+                  <td class="p-3.5">En tiempo casi real mediante constelaciones de satélites (Landsat, Sentinel) y GNSS.</td>
+                </tr>
+                <tr>
+                  <td class="p-3.5 font-semibold">Autonomía en campo</td>
+                  <td class="p-3.5">No depende de baterías ni señal eléctrica; indispensable como respaldo con brújula.</td>
+                  <td class="p-3.5">Requiere dispositivos electrónicos y batería, aunque ofrece precisión métrica inmediata.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. TU PRIMERA EXPEDICIÓN (GUÍA PASO A PASO) -->
+      <section id="primera-expedicion" class="scroll-mt-24">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-terracotta-600 dark:text-orange-400">Manual del Explorador Novato</span>
+            <h2 class="font-display text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mt-1">Tu primera expedición</h2>
+          </div>
+          <!-- Barra de progreso interactiva -->
+          <div class="bg-white dark:bg-slate-900 px-4 py-3 rounded-2xl border border-sand-200 dark:border-slate-800 shadow-sm min-w-[260px]">
+            <div class="flex justify-between text-xs font-bold mb-1.5">
+              <span>Progreso de entrenamiento</span>
+              <span id="expeditionProgressText" class="text-forest-700 dark:text-emerald-400">0 / 8 pasos (0%)</span>
+            </div>
+            <div class="w-full h-2.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div id="expeditionProgressBar" class="h-full bg-gradient-to-r from-forest-600 to-ocean-500 transition-all duration-300" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid lg:grid-cols-12 gap-6">
+          <!-- Lista de 8 pasos interactivos -->
+          <div class="lg:col-span-8 space-y-3" id="expeditionStepsContainer"></div>
+
+          <!-- Columna lateral: Mochila básica, Errores frecuentes y Mini-Glosario -->
+          <div class="lg:col-span-4 space-y-5">
+            <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-sand-200 dark:border-slate-800 shadow-sm">
+              <h3 class="font-display font-bold text-lg text-forest-800 dark:text-emerald-300 mb-3">🎒 Mochila de Campo Básica</h3>
+              <ul class="space-y-2 text-sm text-slate-700 dark:text-slate-300">
+                <li class="flex items-start gap-2"><span class="text-forest-600 font-bold">✓</span> <span><strong>Mapa topográfico impreso</strong> en funda impermeable.</span></li>
+                <li class="flex items-start gap-2"><span class="text-forest-600 font-bold">✓</span> <span><strong>Brújula magnética</strong> con limbo graduado y regla.</span></li>
+                <li class="flex items-start gap-2"><span class="text-forest-600 font-bold">✓</span> <span><strong>Cuaderno de campo</strong> y lápiz de grafito (funciona con lluvia o frío).</span></li>
+                <li class="flex items-start gap-2"><span class="text-forest-600 font-bold">✓</span> <span><strong>Agua potable, abrigo en capas</strong> y botiquín compacto.</span></li>
+                <li class="flex items-start gap-2"><span class="text-forest-600 font-bold">✓</span> <span><strong>Receptor GPS o teléfono</strong> con mapas descargados offline.</span></li>
+              </ul>
+            </div>
+
+            <div class="bg-terracotta-50 dark:bg-orange-950/30 p-5 rounded-3xl border border-terracotta-200 dark:border-orange-900">
+              <h3 class="font-display font-bold text-lg text-terracotta-800 dark:text-orange-300 mb-2">⚠️ Errores Frecuentes</h3>
+              <ul class="space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+                <li><strong>• Confundir Norte Magnético con Norte Geográfico:</strong> La aguja apunta al polo magnético; siempre hay que compensar la <em>declinación magnética</em> del mapa.</li>
+                <li><strong>• Ignorar las curvas de nivel:</strong> Dos puntos que parecen cercanos en línea recta pueden estar separados por un acantilado vertical.</li>
+                <li><strong>• Confiar solo en la batería:</strong> El frío extremo agota las baterías en minutos; el papel nunca se apaga.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. GUÍA DE MINERALES Y RECURSOS NATURALES -->
+      <section id="minerales" class="scroll-mt-24">
+        <div class="mb-6">
+          <span class="text-xs font-bold uppercase tracking-widest text-ocean-600 dark:text-sky-400">Geología y Riqueza Terrestre</span>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mt-1">Guía de Minerales y Recursos Naturales</h2>
+          <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+            Explorá 10 recursos fundamentales de la corteza terrestre. Nota técnica: recursos estratégicos como el <strong>litio</strong> y las <strong>tierras raras</strong> no se extraen listos para usar; requieren procesos hidrometalúrgicos y químicos complejos de separación y refinación.
+          </p>
+        </div>
+
+        <!-- Filtros funcionales -->
+        <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-sand-200 dark:border-slate-800 shadow-sm mb-6 flex flex-wrap gap-3 items-center">
+          <span class="text-xs font-bold uppercase text-slate-500">Filtrar por:</span>
+          <select id="filterMinEnv" aria-label="Filtrar por ambiente geológico" class="text-xs sm:text-sm rounded-xl bg-sand-100 dark:bg-slate-800 border border-sand-200 dark:border-slate-700 px-3 py-2 font-medium">
+            <option value="all">Todos los ambientes</option>
+            <option value="igneo">Magmático / Volcánico / Hidrotermal</option>
+            <option value="sedimentario">Sedimentario / Salares</option>
+            <option value="metamorfico">Metamórfico / Alta presión</option>
+          </select>
+          <select id="filterMinUse" aria-label="Filtrar por utilidad principal" class="text-xs sm:text-sm rounded-xl bg-sand-100 dark:bg-slate-800 border border-sand-200 dark:border-slate-700 px-3 py-2 font-medium">
+            <option value="all">Todas las utilidades</option>
+            <option value="energia">Transición energética y baterías</option>
+            <option value="industria">Construcción, acero y electrónica</option>
+            <option value="joyeria">Joyería, óptica y corte industrial</option>
+          </select>
+          <select id="filterMinExtract" aria-label="Filtrar por método de extracción" class="text-xs sm:text-sm rounded-xl bg-sand-100 dark:bg-slate-800 border border-sand-200 dark:border-slate-700 px-3 py-2 font-medium">
+            <option value="all">Todos los métodos</option>
+            <option value="cielo_abierto">Mina a cielo abierto / Salmuera</option>
+            <option value="subterranea">Minería subterránea / Profunda</option>
+          </select>
+          <button id="btnResetMinFilters" type="button" class="text-xs font-bold text-ocean-600 dark:text-sky-400 hover:underline ml-auto">Restablecer filtros</button>
+        </div>
+
+        <!-- Cuadrícula de Minerales -->
+        <div id="mineralsGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8"></div>
+
+        <!-- Comparador interactivo de 2 recursos -->
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-sand-200 dark:border-slate-800 shadow-md">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h3 class="font-display font-bold text-xl text-slate-900 dark:text-white">⚖️ Comparador Geológico de Recursos</h3>
+            <div class="flex flex-wrap gap-2">
+              <select id="compareMinA" aria-label="Seleccionar primer recurso a comparar" class="text-sm rounded-xl bg-sand-100 dark:bg-slate-800 border border-sand-200 dark:border-slate-700 px-3 py-1.5 font-semibold"></select>
+              <span class="self-center font-bold text-slate-400">VS</span>
+              <select id="compareMinB" aria-label="Seleccionar segundo recurso a comparar" class="text-sm rounded-xl bg-sand-100 dark:bg-slate-800 border border-sand-200 dark:border-slate-700 px-3 py-1.5 font-semibold"></select>
+            </div>
+          </div>
+          <div id="mineralCompareResult" class="grid md:grid-cols-2 gap-4"></div>
+        </div>
+      </section>
+
+      <!-- 6. INSTRUMENTOS DE ORIENTACIÓN Y MEDICIÓN -->
+      <section id="instrumentos" class="scroll-mt-24">
+        <div class="mb-6">
+          <span class="text-xs font-bold uppercase tracking-widest text-forest-700 dark:text-emerald-400">Herramientas del Geógrafo</span>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mt-1">Instrumentos de Orientación y Medición</h2>
+        </div>
+
+        <!-- Selector interactivo: ¿Qué instrumento necesito? -->
+        <div class="bg-gradient-to-r from-ocean-900 to-forest-900 text-white rounded-3xl p-6 sm:p-8 shadow-lg mb-8">
+          <div class="grid lg:grid-cols-12 gap-6 items-center">
+            <div class="lg:col-span-5">
+              <span class="text-xs uppercase font-bold tracking-wider text-sky-300">Asistente de Campo</span>
+              <h3 class="font-display text-2xl font-bold mt-1 mb-2">¿Qué instrumento necesito para esta tarea?</h3>
+              <p class="text-sm text-sky-100 mb-4">Seleccioná una situación real de investigación o expedición:</p>
+              <select id="instrumentTaskSelector" aria-label="Seleccionar tarea geográfica"
+                class="w-full rounded-xl bg-white/15 border border-white/30 text-white px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-sky-300">
+                <option value="rumbo" class="text-slate-900">Mantener un rumbo recto en un bosque cerrado sin señal móvil</option>
+                <option value="pendiente" class="text-slate-900">Medir la inclinación de una ladera para evaluar riesgo de alud</option>
+                <option value="lluvia" class="text-slate-900">Cuantificar cuánta agua cayó durante una tormenta en una cuenca</option>
+                <option value="altitud" class="text-slate-900">Conocer la altitud y detectar una caída brusca de presión atmosférica</option>
+                <option value="catastro" class="text-slate-900">Medir ángulos horizontales y verticales con precisión milimétrica para un puente</option>
+                <option value="viento" class="text-slate-900">Registrar la velocidad de las ráfagas en un paso de montaña</option>
+              </select>
+            </div>
+            <div class="lg:col-span-7 bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20" id="instrumentRecommendationBox">
+              <!-- Se completa dinámicamente -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Tarjetas de los 8 instrumentos + Diagrama de Triangulación -->
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8" id="instrumentsGrid"></div>
+
+        <!-- Diagrama visual: Cómo triangular una posición con brújula y mapa -->
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-sand-200 dark:border-slate-800 shadow-sm grid md:grid-cols-12 gap-6 items-center">
+          <div class="md:col-span-5">
+            <svg viewBox="0 0 320 220" class="w-full h-auto rounded-2xl bg-sand-100 dark:bg-slate-800 border border-sand-200 dark:border-slate-700" role="img" aria-label="Diagrama de triangulación cartográfica usando dos picos visibles y líneas de rumbo">
+              <!-- Cuadrícula -->
+              <path d="M0 55 H320 M0 110 H320 M0 165 H320 M80 0 V220 M160 0 V220 M240 0 V220" stroke="#94a3b8" stroke-width="0.6" stroke-dasharray="3 3"/>
+              <!-- Pico A -->
+              <polygon points="75,35 55,65 95,65" fill="#475569"/>
+              <text x="75" y="26" text-anchor="middle" font-size="10" font-weight="bold" fill="#0f172a">Pico A (315°)</text>
+              <!-- Pico B -->
+              <polygon points="245,45 225,75 265,75" fill="#475569"/>
+              <text x="245" y="34" text-anchor="middle" font-size="10" font-weight="bold" fill="#0f172a">Pico B (45°)</text>
+              <!-- Líneas de retro-azimut -->
+              <line x1="75" y1="55" x2="175" y2="165" stroke="#ea580c" stroke-width="2" stroke-dasharray="5 3"/>
+              <line x1="245" y1="65" x2="145" y2="165" stroke="#0284c7" stroke-width="2" stroke-dasharray="5 3"/>
+              <!-- Punto de intersección (Tu posición) -->
+              <circle cx="160" cy="148" r="7" fill="#16a34a" stroke="#fff" stroke-width="2"/>
+              <text x="160" y="172" text-anchor="middle" font-size="11" font-weight="bold" fill="#15803d">Tu Posición Exacta</text>
+            </svg>
+          </div>
+          <div class="md:col-span-7">
+            <span class="text-xs font-bold uppercase text-ocean-600 dark:text-sky-400">Técnica Fundamental</span>
+            <h3 class="font-display text-2xl font-bold text-slate-900 dark:text-white mt-1 mb-2">¿Cómo triangular tu posición sin GPS?</h3>
+            <ol class="space-y-2 text-sm text-slate-700 dark:text-slate-300 list-decimal list-inside">
+              <li><strong>Identificá dos puntos notables</strong> en el paisaje que también aparezcan en tu mapa (por ejemplo, dos cumbres o una torre y un cabo).</li>
+              <li><strong>Medí el rumbo (azimut)</strong> hacia el Pico A con la brújula y trazá una línea desde ese pico en el mapa usando el rumbo opuesto (retro-azimut).</li>
+              <li><strong>Repetí el procedimiento</strong> con el Pico B. El punto donde ambas líneas se cruzan sobre el mapa indica tu ubicación real.</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. BIOMAS Y GRANDES DOMÍNIOS TERRESTRES -->
+      <section id="biomas" class="scroll-mt-24">
+        <div class="mb-6">
+          <span class="text-xs font-bold uppercase tracking-widest text-forest-700 dark:text-emerald-400">Ecosistemas y Dinámica Planetaria</span>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mt-1">Biomas y Grandes Esferas Terrestres</h2>
+        </div>
+
+        <!-- 9 Biomas -->
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-10" id="biomesGrid"></div>
+
+        <!-- Las 3 Grandes Esferas + Zonas de Transición -->
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-sand-200 dark:border-slate-800 shadow-md">
+          <h3 class="font-display text-2xl font-bold text-slate-900 dark:text-white mb-4">Las Esferas de la Tierra y sus Zonas de Contacto</h3>
+          <div class="grid md:grid-cols-3 gap-4 mb-6">
+            <div class="p-5 rounded-2xl bg-terracotta-50 dark:bg-orange-950/30 border border-terracotta-200 dark:border-orange-900">
+              <h4 class="font-display font-bold text-lg text-terracotta-800 dark:text-orange-300">🪨 Litosfera (Tierra sólida)</h4>
+              <p class="text-sm text-slate-700 dark:text-slate-300 mt-1">Corteza y manto superior fragmentados en placas tectónicas. Su movimiento eleva cordilleras, abre fosas oceánicas y alimenta volcanes.</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-ocean-50 dark:bg-sky-950/30 border border-ocean-200 dark:border-sky-900">
+              <h4 class="font-display font-bold text-lg text-ocean-800 dark:text-sky-300">💧 Hidrosfera (Aguas)</h4>
+              <p class="text-sm text-slate-700 dark:text-slate-300 mt-1">Cubre el 71% de la superficie. El 97,5% es agua salada oceánica y solo el 2,5% es agua dulce (mayormente glaciares y acuíferos subterráneos).</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-sky-50 dark:bg-indigo-950/30 border border-sky-200 dark:border-indigo-900">
+              <h4 class="font-display font-bold text-lg text-sky-900 dark:text-indigo-300">🌬️ Atmósfera (Envoltura gaseosa)</h4>
+              <p class="text-sm text-slate-700 dark:text-slate-300 mt-1">Regula la temperatura planetaria, filtra radiación ultravioleta y redistribuye calor desde el ecuador hacia los polos mediante vientos y lluvias.</p>
+            </div>
+          </div>
+          <div class="p-4 rounded-2xl bg-forest-50 dark:bg-forest-900/20 border border-forest-200 dark:border-forest-800 text-sm text-slate-700 dark:text-slate-300">
+            <strong>🔄 ¿Qué ocurre en las zonas de transición?</strong> Donde las esferas chocan nacen los paisajes más dinámicos: en las <strong>costas</strong>, el oleaje de la hidrosfera esculpe acantilados de la litosfera; en la <strong>línea de nieves eternas</strong>, la altitud atmosférica congela el agua en glaciares; y en los <strong>ecotonos climáticos</strong> (como el Sahel), leves cambios de lluvia transforman sabanas en desiertos.
+          </div>
+        </div>
+      </section>
+
+      <!-- 8. MARAVILLAS NATURALES Y FORMACIONES GEOGRÁFICAS -->
+      <section id="maravillas" class="scroll-mt-24">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-terracotta-600 dark:text-orange-400">Monumentos del Planeta</span>
+            <h2 class="font-display text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mt-1">12 Maravillas Naturales y Formaciones Geográficas</h2>
+          </div>
+          <!-- Filtros de maravillas -->
+          <div class="flex flex-wrap gap-2">
+            <select id="filterWonderRegion" aria-label="Filtrar maravillas por región" class="text-xs sm:text-sm rounded-xl bg-white dark:bg-slate-900 border border-sand-200 dark:border-slate-700 px-3 py-2 font-medium">
+              <option value="all">Todas las regiones</option>
+              <option value="America">América</option>
+              <option value="Europa">Europa</option>
+              <option value="Asia">Asia</option>
+              <option value="Africa">África</option>
+              <option value="Oceania">Oceanía y Océano</option>
+            </select>
+            <select id="filterWonderDiff" aria-label="Filtrar maravillas por dificultad de acceso" class="text-xs sm:text-sm rounded-xl bg-white dark:bg-slate-900 border border-sand-200 dark:border-slate-700 px-3 py-2 font-medium">
+              <option value="all">Cualquier acceso</option>
+              <option value="Accesible">Acceso turístico acondicionado</option>
+              <option value="Moderada">Expedición moderada</option>
+              <option value="Extrema">Expedición extrema / Científica</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="wondersGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+      </section>
+
+      <!-- 9. POBLACIÓN, CULTURAS Y ADAPTACIÓN HUMANA -->
+      <section id="poblacion" class="scroll-mt-24">
+        <div class="mb-6">
+          <span class="text-xs font-bold uppercase tracking-widest text-ocean-600 dark:text-sky-400">Geografía Humana</span>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mt-1">Población, Culturas y Adaptación Humana</h2>
+        </div>
+
+        <div class="grid lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-7 bg-white dark:bg-slate-900 rounded-3xl p-6 border border-sand-200 dark:border-slate-800 shadow-sm space-y-4">
+            <h3 class="font-display font-bold text-xl text-slate-900 dark:text-white">Modos de Vida y Relación con el Entorno</h3>
+            <div class="grid sm:grid-cols-2 gap-3 text-sm">
+              <div class="p-4 rounded-2xl bg-sand-100 dark:bg-slate-800">
+                <strong class="text-forest-800 dark:text-emerald-300 block mb-1">🏛️ Civilizaciones Fluviales y Megaciudades</strong>
+                <p class="text-slate-600 dark:text-slate-300">Históricamente la población se concentró en valles fértiles (Nilo, Indo, Yangtsé, Río de la Plata). Hoy más del 56% de la humanidad vive en áreas urbanas como Tokio, Delhi o São Paulo.</p>
+              </div>
+              <div class="p-4 rounded-2xl bg-sand-100 dark:bg-slate-800">
+                <strong class="text-terracotta-700 dark:text-orange-300 block mb-1">🐪 Pastoreo Nómada y Estepas</strong>
+                <p class="text-slate-600 dark:text-slate-300">En estepas de Asia Central o bordes del Sahara, pueblos como los mongoles o tuaregs practican movilidad estacional siguiendo pasturas y pozos de agua.</p>
+              </div>
+              <div class="p-4 rounded-2xl bg-sand-100 dark:bg-slate-800">
+                <strong class="text-ocean-700 dark:text-sky-300 block mb-1">🏔️ Culturas de Alta Montaña</strong>
+                <p class="text-slate-600 dark:text-slate-300">En los Andes y el Himalaya, las comunidades desarrollaron terrazas agrícolas, intercambio entre pisos térmicos y adaptaciones fisiológicas a la baja presión de oxígeno.</p>
+              </div>
+              <div class="p-4 rounded-2xl bg-sand-100 dark:bg-slate-800">
+                <strong class="text-indigo-700 dark:text-indigo-300 block mb-1">🏝️ Sociedades Insulares y Costeras</strong>
+                <p class="text-slate-600 dark:text-slate-300">Los pueblos polinesios desarrollaron navegación astronómica y lectura de corrientes oceánicas para conectar miles de islas en el Pacífico.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="lg:col-span-5 bg-slate-900 text-white rounded-3xl p-6 shadow-md flex flex-col justify-between">
+            <div>
+              <span class="px-3 py-1 rounded-full text-xs font-bold bg-sky-500/20 text-sky-300">Concepto Clave</span>
+              <h3 class="font-display font-bold text-2xl mt-3 mb-2">Ecúmene vs. Anecúmene</h3>
+              <p class="text-sm text-slate-300 leading-relaxed mb-4">
+                Los geógrafos llaman <strong>ecúmene</strong> al conjunto de tierras habitadas de forma permanente por el ser humano (llanuras templadas, costas y valles).
+              </p>
+              <p class="text-sm text-slate-300 leading-relaxed">
+                En cambio, el <strong>anecúmene</strong> comprende las regiones donde las condiciones extremas impiden el asentamiento permanente: el interior de la <strong>Antártida</strong>, los casquetes polares de Groenlandia, las cumbres más altas y el núcleo hiperárido de desiertos como el Rub al-Jali o Atacama (donde solo existen estaciones científicas o tránsito temporal).
+              </p>
+            </div>
+            <div class="mt-5 pt-4 border-t border-slate-700 text-xs text-sky-300">
+              Dato demográfico: Cerca del 90% de la población mundial vive en el hemisferio norte y a menos de 500 metros sobre el nivel del mar.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 10. PAISAJES, URBANISMO Y PLANIFICACIÓN TERRITORIAL -->
+      <section id="urbanismo" class="scroll-mt-24">
+        <div class="mb-6">
+          <span class="text-xs font-bold uppercase tracking-widest text-forest-700 dark:text-emerald-400">Arquitectura y Territorio</span>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mt-1">Paisajes, Urbanismo y Planificación Territorial</h2>
+        </div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8" id="urbanGrid"></div>
+
+        <!-- Generador de Desafíos Geográficos -->
+        <div class="bg-gradient-to-br from-forest-800 via-forest-900 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-emerald-300">Taller de Planificación Territorial</span>
+              <h3 class="font-display text-2xl font-bold mt-1">🎲 Generador de Desafíos Geográficos</h3>
+              <p class="text-sm text-slate-300">Combiná un tipo de asentamiento, un bioma real y un reto ambiental para diseñar una solución sostenible.</p>
+            </div>
+            <button id="btnGenerateChallenge" type="button" data-sound="click"
+              class="px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm shadow-lg transition shrink-0">
+              Generar Nuevo Desafío
+            </button>
+          </div>
+          <div id="geoChallengeBox" class="grid md:grid-cols-3 gap-4 bg-white/10 backdrop-blur-sm p-5 rounded-2xl border border-white/15"></div>
+        </div>
+      </section>
+
+      <!-- 11. AGRICULTURA, CLIMA Y RECURSOS HÍDRICOS -->
+      <section id="agricultura" class="scroll-mt-24">
+        <div class="mb-6">
+          <span class="text-xs font-bold uppercase tracking-widest text-terracotta-600 dark:text-orange-400">Suelo, Agua y Alimentación</span>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mt-1">Agricultura, Clima y Recursos Hídricos</h2>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-sand-200 dark:border-slate-800 shadow-sm">
+            <h3 class="font-display font-bold text-xl text-forest-800 dark:text-emerald-300 mb-3">🌾 Cultivos según Latitud y Relieve</h3>
+            <ul class="space-y-3 text-sm text-slate-700 dark:text-slate-300">
+              <li><strong>Trigo y Girasol (Latitudes templadas):</strong> Prosperan en llanuras fértiles como la Pampa argentina, las Grandes Llanuras de Norteamérica y Ucrania, con estaciones marcadas.</li>
+              <li><strong>Arroz en terrazas (Clima monzónico):</strong> Requiere abundante agua y calor; en el sudeste asiático se esculpen terrazas escalonadas en laderas para retener el agua de lluvia.</li>
+              <li><strong>Café y Cacao (Franja intertropical):</strong> El café arábica crece en laderas tropicales húmedas entre 1.000 y 2.000 m de altitud; el cacao prefiere la sombra cálida de selvas bajas.</li>
+              <li><strong>Vid y Olivo (Clima mediterráneo):</strong> Adaptados a veranos secos y soleados e inviernos suaves (cuenca del Mediterráneo, Cuyo en Argentina, Chile central, California).</li>
+            </ul>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-sand-200 dark:border-slate-800 shadow-sm">
+            <h3 class="font-display font-bold text-xl text-ocean-800 dark:text-sky-300 mb-3">🚰 Secano vs. Regadío y Gestión de Cuencas</h3>
+            <div class="space-y-3 text-sm text-slate-700 dark:text-slate-300">
+              <div class="p-3.5 rounded-2xl bg-ocean-50 dark:bg-sky-950/30">
+                <strong>Agricultura de Secano:</strong> Depende exclusivamente de las precipitaciones naturales. Es eficiente en regiones húmedas, pero vulnerable a sequías prolongadas.
+              </div>
+              <div class="p-3.5 rounded-2xl bg-forest-50 dark:bg-forest-900/20">
+                <strong>Agricultura de Regadío:</strong> Aporta agua mediante canales, riego por goteo o pivotes desde ríos y acuíferos, permitiendo cultivar en oasis desérticos como Mendoza (Argentina) o el valle del Nilo.
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                <strong>Seguridad hídrica:</strong> La agricultura consume cerca del 70% del agua dulce extraída en el mundo; proteger los bosques de cabecera de cuenca evita inundaciones y sequías río abajo.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 12. CARTOGRAFÍA Y SISTEMAS DE INFORMACIÓN GEOGRÁFICA (SIG) SIN COMPLICACIONES -->
+      <section id="sig-simulador" class="scroll-mt-24">
+        <div class="mb-6">
+          <span class="text-xs font-bold uppercase tracking-widest text-ocean-600 dark:text-sky-400">Laboratorio Interactivo</span>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mt-1">Cartografía y SIG sin complicaciones</h2>
+          <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+            Un Sistema de Información Geográfica (SIG) superpone distintas capas de datos sobre un mismo lugar. Activá o desactivá capas y hacé clic o arrastrá el marcador sobre el mapa para analizar el terreno. <span class="italic">(Simulación educativa simplificada)</span>.
+          </p>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-sand-200 dark:border-slate-800 shadow-lg grid lg:grid-cols-12 gap-6">
+          <!-- Controles de capas SIG -->
+          <div class="lg:col-span-4 space-y-4">
+            <h3 class="font-display font-bold text-lg text-slate-900 dark:text-white">🗂️ Control de Capas SIG</h3>
+            <div class="space-y-2.5 text-sm">
+              <label class="flex items-center justify-between p-3 rounded-xl bg-sand-100 dark:bg-slate-800 cursor-pointer">
+                <span class="font-semibold flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-amber-700"></span> Curvas de Nivel (Relieve)</span>
+                <input type="checkbox" id="layerTopo" checked class="w-4 h-4 accent-forest-700" />
+              </label>
+              <label class="flex items-center justify-between p-3 rounded-xl bg-sand-100 dark:bg-slate-800 cursor-pointer">
+                <span class="font-semibold flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-sky-500"></span> Red Hidrográfica (Ríos)</span>
+                <input type="checkbox" id="layerHydro" checked class="w-4 h-4 accent-ocean-600" />
+              </label>
+              <label class="flex items-center justify-between p-3 rounded-xl bg-sand-100 dark:bg-slate-800 cursor-pointer">
+                <span class="font-semibold flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-rose-600"></span> Asentamientos y Rutas</span>
+                <input type="checkbox" id="layerUrban" checked class="w-4 h-4 accent-rose-600" />
+              </label>
+              <label class="flex items-center justify-between p-3 rounded-xl bg-sand-100 dark:bg-slate-800 cursor-pointer">
+                <span class="font-semibold flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-orange-500"></span> Zona de Riesgo Sísmico / Inundación</span>
+                <input type="checkbox" id="layerRisk" class="w-4 h-4 accent-orange-600" />
+              </label>
+            </div>
+
+            <!-- Telemetría en tiempo real del punto seleccionado -->
+            <div class="p-4 rounded-2xl bg-slate-900 text-white space-y-2 text-xs font-mono">
+              <div class="text-sky-400 font-bold uppercase tracking-wider">📡 Inspector de Punto Geográfico</div>
+              <div class="flex justify-between"><span>Coordenadas:</span> <span id="sigCoords" class="text-emerald-300">26°50'S, 65°25'O</span></div>
+              <div class="flex justify-between"><span>Altitud estimada:</span> <span id="sigAlt" class="text-amber-300">1.450 m s. n. m.</span></div>
+              <div class="flex justify-between"><span>Pendiente:</span> <span id="sigSlope">Moderada (14°)</span></div>
+              <div class="flex justify-between"><span>Bioma / Uso:</span> <span id="sigBiome" class="text-sky-200">Bosque Montano</span></div>
+              <div class="flex justify-between"><span>Nivel de Riesgo:</span> <span id="sigRiskText" class="text-orange-300">Bajo</span></div>
+            </div>
+          </div>
+
+          <!-- Lienzo SVG Interactivo del Mapa SIG -->
+          <div class="lg:col-span-8">
+            <div class="relative rounded-2xl overflow-hidden border-2 border-slate-300 dark:border-slate-700 bg-emerald-100">
+              <svg id="sigMapCanvas" viewBox="0 0 640 380" class="w-full h-auto cursor-crosshair select-none block" role="img" aria-label="Mapa SIG interactivo con relieves, ríos, ciudades y zonas de riesgo">
+                <!-- Base terrestre -->
+                <rect width="640" height="380" fill="#dcfce7"/>
+                <!-- Zona alta montañosa izquierda -->
+                <ellipse cx="145" cy="165" rx="135" ry="145" fill="#d6d3d1"/>
+                <ellipse cx="135" cy="160" rx="85" ry="95" fill="#a8a29e"/>
+                <ellipse cx="130" cy="155" rx="40" ry="45" fill="#f8fafc"/>
+                <!-- Llanura oriental y costa -->
+                <path d="M510,0 Q495,180 535,380 L640,380 L640,0 Z" fill="#38bdf8"/>
+
+                <!-- Capa Curvas de Nivel -->
+                <g id="sigGroupTopo" stroke="#78350f" fill="none" opacity="0.7">
+                  <ellipse cx="145" cy="165" rx="165" ry="170" stroke-width="1"/>
+                  <ellipse cx="145" cy="165" rx="135" ry="145" stroke-width="1.3"/>
+                  <ellipse cx="135" cy="160" rx="105" ry="115" stroke-width="1"/>
+                  <ellipse cx="135" cy="160" rx="85" ry="95" stroke-width="1.5"/>
+                  <ellipse cx="130" cy="155" rx="60" ry="65" stroke-width="1"/>
+                  <ellipse cx="130" cy="155" rx="40" ry="45" stroke-width="1.5"/>
+                  <text x="130" y="105" font-size="9" fill="#78350f" stroke="none">3.500m</text>
+                  <text x="235" y="75" font-size="9" fill="#78350f" stroke="none">1.500m</text>
+                  <text x="360" y="190" font-size="9" fill="#166534" stroke="none">300m (Llanura)</text>
+                </g>
+
+                <!-- Capa Hidrografía -->
+                <g id="sigGroupHydro">
+                  <path d="M145,165 Q230,195 310,175 T515,210" fill="none" stroke="#0284c7" stroke-width="6" stroke-linecap="round"/>
+                  <path d="M190,65 Q255,120 310,175" fill="none" stroke="#0284c7" stroke-width="3.5" stroke-linecap="round"/>
+                  <text x="345" y="165" font-size="10" font-weight="bold" fill="#0369a1">Río Grande</text>
+                </g>
+
+                <!-- Capa Asentamientos y Rutas -->
+                <g id="sigGroupUrban">
+                  <path d="M80,310 L295,215 L490,212" fill="none" stroke="#e11d48" stroke-width="2.5" stroke-dasharray="6 4"/>
+                  <circle cx="295" cy="215" r="7" fill="#e11d48" stroke="#fff" stroke-width="2"/>
+                  <text x="295" y="236" text-anchor="middle" font-size="11" font-weight="bold" fill="#881337">Ciudad del Valle</text>
+                  <circle cx="490" cy="212" r="8" fill="#e11d48" stroke="#fff" stroke-width="2"/>
+                  <text x="480" y="198" text-anchor="middle" font-size="11" font-weight="bold" fill="#881337">Puerto Costa</text>
+                </g>
+
+                <!-- Capa Riesgos -->
+                <g id="sigGroupRisk" opacity="0">
+                  <ellipse cx="385" cy="195" rx="115" ry="48" fill="#f97316" fill-opacity="0.35" stroke="#ea580c" stroke-width="1.5" stroke-dasharray="4 3"/>
+                  <text x="385" y="254" text-anchor="middle" font-size="10" font-weight="bold" fill="#9a3412">⚠ Llanura de Inundación</text>
+                </g>
+
+                <!-- Marcador Interactivo -->
+                <g id="sigMarker" transform="translate(230, 175)">
+                  <circle cx="0" cy="0" r="14" fill="#0ea5e9" fill-opacity="0.25"/>
+                  <circle cx="0" cy="0" r="6" fill="#0f172a" stroke="#fff" stroke-width="2"/>
+                </g>
+              </svg>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">💡 Hacé clic o tocá cualquier punto del mapa para inspeccionar su altitud, pendiente y bioma.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 13. HISTORIA DE LA GEOGRAFÍA Y LAS EXPLORACIONES -->
+      <section id="historia" class="scroll-mt-24">
+        <div class="mb-6">
+          <span class="text-xs font-bold uppercase tracking-widest text-terracotta-600 dark:text-orange-400">De los Pergaminos a los Satélites</span>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mt-1">Historia de la Geografía y las Exploraciones</h2>
+        </div>
+
+        <!-- Línea de tiempo visual -->
+        <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+          <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border-t-4 border-amber-500 shadow-sm">
+            <span class="text-xs font-bold text-amber-600">Siglo III a. C. – II d. C.</span>
+            <h3 class="font-display font-bold text-base mt-1">Eratóstenes y Ptolomeo</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-300 mt-1.5">Eratóstenes acuñó el término "Geografía" y calculó la circunferencia terrestre con asombrosa precisión usando sombras en Siena y Alejandría. Ptolomeo sistematizó latitud y longitud.</p>
+          </div>
+          <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border-t-4 border-terracotta-500 shadow-sm">
+            <span class="text-xs font-bold text-terracotta-600">Siglos XIII – XIV</span>
+            <h3 class="font-display font-bold text-base mt-1">Portulanos y Viajeros</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-300 mt-1.5">Surgen las cartas portulanas mediterráneas con redes de rumbos para navegación con brújula, mientras viajeros como Ibn Battuta y Marco Polo describen rutas entre Asia, África y Europa.</p>
+          </div>
+          <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border-t-4 border-ocean-500 shadow-sm">
+            <span class="text-xs font-bold text-ocean-600">Siglos XV – XVI</span>
+            <h3 class="font-display font-bold text-base mt-1">Era de los Descubrimientos</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-300 mt-1.5">Expediciones oceánicas conectan los continentes, se completa la primera circunnavegación (Magallanes-Elcano, 1519-1522) y Gerardus Mercator crea su célebre proyección náutica (1569).</p>
+          </div>
+          <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border-t-4 border-forest-600 shadow-sm">
+            <span class="text-xs font-bold text-forest-600">Siglo XIX</span>
+            <h3 class="font-display font-bold text-base mt-1">Alexander von Humboldt</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-300 mt-1.5">Transforma la geografía en ciencia explicativa al relacionar altitud, temperatura, vegetación y corrientes oceánicas (como la Corriente de Humboldt) tras sus expediciones por América.</p>
+          </div>
+          <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border-t-4 border-indigo-500 shadow-sm">
+            <span class="text-xs font-bold text-indigo-600">Siglo XX – 2026</span>
+            <h3 class="font-display font-bold text-base mt-1">Satélites y SIG Globales</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-300 mt-1.5">Desde las primeras fotos orbitales y el programa Landsat (1972) hasta los sistemas GNSS y gemelos digitales actuales, monitoreamos bosques, glaciares y ciudades en tiempo real.</p>
+          </div>
+        </div>
+
+        <!-- Diferenciación entre hechos históricos y mitos cartográficos -->
+        <div class="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-2xl p-5 text-sm">
+          <h3 class="font-display font-bold text-base text-amber-900 dark:text-amber-300 mb-1">📜 Hechos Comprobados vs. Mitos Cartográficos Antiguos</h3>
+          <p class="text-slate-700 dark:text-slate-300">
+            Es importante distinguir la exploración documentada de las leyendas dibujadas en mapas antiguos: durante siglos, los cartógrafos incluyeron tierras hipotéticas como la <em>"Terra Australis Incognita"</em> (un supuesto continente gigante en el sur para equilibrar las tierras del norte), islas fantasma como San Brandán o ilustraciones de criaturas marinas (<em>"Hic sunt dracones"</em>) para representar océanos aún no cartografiados.
+          </p>
+        </div>
+      </section>
+
+      <!-- 14. APRENDER JUGANDO (5 ACTIVIDADES FUNCIONALES) -->
+      <section id="aprender-jugando" class="scroll-mt-24">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-forest-700 dark:text-emerald-400">Desafíos Interactivos • Progreso Guardado Localmente</span>
+            <h2 class="font-display text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mt-1">Aprender Jugando</h2>
+          </div>
+          <div class="text-xs font-bold bg-white dark:bg-slate-900 px-4 py-2 rounded-xl border border-sand-200 dark:border-slate-800">
+            🏆 Puntos acumulados: <span id="totalGameScore" class="text-forest-700 dark:text-emerald-400 text-sm">0</span>
+          </div>
+        </div>
+
+        <!-- Pestañas de los 5 juegos -->
+        <div class="flex flex-wrap gap-2 mb-5" role="tablist">
+          <button type="button" onclick="switchGameTab('quiz')" id="tab-quiz" class="game-tab px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-forest-700 text-white shadow">1. Quiz Geográfico</button>
+          <button type="button" onclick="switchGameTab('mineral')" id="tab-mineral" class="game-tab px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-sand-200 dark:border-slate-700">2. Adivina el Recurso</button>
+          <button type="button" onclick="switchGameTab('equipo')" id="tab-equipo" class="game-tab px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-sand-200 dark:border-slate-700">3. Elegí el Instrumento</button>
+          <button type="button" onclick="switchGameTab('orden')" id="tab-orden" class="game-tab px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-sand-200 dark:border-slate-700">4. Ordená la Expedición</button>
+          <button type="button" onclick="switchGameTab('perfil')" id="tab-perfil" class="game-tab px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-sand-200 dark:border-slate-700">5. Test: Tu Perfil Explorador</button>
+        </div>
+
+        <!-- Contenedor dinámico de actividad activa -->
+        <div id="gameStage" class="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-sand-200 dark:border-slate-800 shadow-md"></div>
+      </section>
+
+      <!-- 15. PREGUNTAS FRECUENTES Y GLOSARIO -->
+      <section id="faq-glosario" class="scroll-mt-24">
+        <div class="grid lg:grid-cols-12 gap-8">
+          <!-- FAQ -->
+          <div class="lg:col-span-6 space-y-3">
+            <span class="text-xs font-bold uppercase tracking-widest text-ocean-600 dark:text-sky-400">Dudas Comunes</span>
+            <h2 class="font-display text-3xl font-bold text-slate-900 dark:text-white mb-4">Preguntas Frecuentes</h2>
+            <div id="faqContainer" class="space-y-2.5"></div>
+          </div>
+
+          <!-- Glosario -->
+          <div class="lg:col-span-6">
+            <span class="text-xs font-bold uppercase tracking-widest text-forest-700 dark:text-emerald-400">Vocabulario Esencial</span>
+            <h2 class="font-display text-3xl font-bold text-slate-900 dark:text-white mb-4">Glosario Geográfico</h2>
+            <div id="glossaryGrid" class="grid sm:grid-cols-2 gap-3"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Pie de página con fuentes oficiales y aviso independiente -->
+  <footer class="bg-slate-900 text-slate-300 border-t border-slate-800 mt-16 py-10 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-8 text-sm">
+      <div>
+        <div class="font-display font-bold text-lg text-white mb-2">🌍 TERRA ATLAS • Geografía</div>
+        <p class="text-slate-400 text-xs leading-relaxed">
+          Plataforma educativa interactiva diseñada para despertar la curiosidad por el planeta Tierra, la cartografía y las ciencias ambientales.
+        </p>
+      </div>
+      <div>
+        <h3 class="font-bold text-white mb-2">Fuentes Geográficas Oficiales</h3>
+        <ul class="space-y-1.5 text-xs text-sky-300">
+          <li><a href="https://www.ign.gob.ar/" target="_blank" rel="noopener noreferrer" class="hover:underline">• Instituto Geográfico Nacional (IGN Argentina)</a></li>
+          <li><a href="https://www.usgs.gov/" target="_blank" rel="noopener noreferrer" class="hover:underline">• Servicio Geológico de los Estados Unidos (USGS)</a></li>
+          <li><a href="https://earthobservatory.nasa.gov/" target="_blank" rel="noopener noreferrer" class="hover:underline">• NASA Earth Observatory (Imágenes y Clima)</a></li>
+          <li><a href="https://www.nationalgeographic.org/society/education-resources/" target="_blank" rel="noopener noreferrer" class="hover:underline">• National Geographic Education Resources</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="font-bold text-white mb-2">Nota Editorial y Revisión</h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Proyecto educativo independiente sin afiliación institucional. Datos geográficos y geológicos verificados con estándares cartográficos internacionales (Revisión: Noviembre 2026). No incluye descargas externas no autorizadas.
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Botón Volver Arriba -->
+  <button id="btnScrollTop" type="button" title="Volver arriba" aria-label="Volver al inicio de la página"
+    class="hidden fixed bottom-5 right-5 z-40 w-12 h-12 rounded-2xl bg-forest-700 hover:bg-forest-800 text-white shadow-xl flex items-center justify-center text-lg font-bold transition">
+    ↑
+  </button>
+
+  <!-- Modal para Detalles Ampliados y Favoritos -->
+  <div id="detailModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full max-h-[88vh] overflow-y-auto p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-700 relative">
+      <button id="btnCloseModal" type="button" aria-label="Cerrar ventana"
+        class="absolute top-4 right-4 w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 font-bold text-slate-700 dark:text-slate-200">✕</button>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- SCRIPT PRINCIPAL DE DATOS E INTERACTIVIDAD -->
+  <script>
+    /* =========================================================================
+       1. BASE DE DATOS GEOGRÁFICA REAL Y ESTRUCTURADA
+       ========================================================================= */
+
+    const EXPEDITION_STEPS = [
+      { id: 1, title: "Leer la rosa de los vientos", desc: "Identificá los cuatro puntos cardinales (Norte, Sur, Este, Oeste) y los rumbos intermedios (NE, SE, SO, NO). Por convención, el Norte suele ubicarse en la parte superior del mapa." },
+      { id: 2, title: "Entender latitud y longitud", desc: "La latitud mide la distancia angular al Ecuador (0° a 90° N/S) y define las zonas térmicas; la longitud mide la distancia al Meridiano de Greenwich (0° a 180° E/O) y organiza los husos horarios." },
+      { id: 3, title: "Interpretar escalas cartográficas", desc: "Una escala 1:50.000 significa que 1 cm en el mapa equivale a 50.000 cm (500 metros) en el terreno real. Cuanto menor es el denominador, mayor es el nivel de detalle." },
+      { id: 4, title: "Leer curvas de nivel y relieve", desc: "Son líneas imaginarias que unen puntos de igual altitud. Si están muy juntas, la pendiente es escarpada; si están separadas, el terreno es suave o llano." },
+      { id: 5, title: "Identificar climas y estaciones", desc: "Observá cómo la altitud (baja ~6,5 °C cada 1.000 m), la cercanía al mar y los vientos dominantes modifican la temperatura y las lluvias de tu ruta." },
+      { id: 6, title: "Reconocer cuencas hidrográficas", desc: "Todo río fluye desde las divisorias de aguas (cumbres) hacia las zonas bajas. Seguir un curso de agua suele conducir hacia valles y poblaciones." },
+      { id: 7, title: "Preparar equipo de campo básico", desc: "Revisá mapa impreso en bolsa hermética, brújula, agua, protección solar, abrigo impermeable y botiquín antes de salir." },
+      { id: 8, title: "Orientarse con brújula y mapa sin GPS", desc: "Alineá el borde de la brújula entre tu origen y destino, girá el limbo hasta que las líneas norte-sur coincidan con los meridianos del mapa y seguí la flecha de dirección." }
+    ];
+
+    const MINERALS = [
+      {
+        id: "carbon", name: "Carbón Mineral", color: "#334155", accent: "#94a3b8",
+        env: "sedimentario", envLabel: "Cuencas sedimentarias antiguas",
+        region: "Asia Oriental, América del Norte, Europa y Australia",
+        depth: "Desde afloramientos superficiales hasta 1.000 m de profundidad",
+        extract: "cielo_abierto", extractLabel: "Mina a cielo abierto y galerías subterráneas",
+        yields: "Antracita, hulla y lignito (roca orgánica rica en carbono)",
+        use: "energia", usesText: "Generación eléctrica térmica, siderurgia (coque para acero) e industria química.",
+        precautions: "Su combustión es una de las mayores fuentes de CO₂; requiere transición energética y restauración de suelos.",
+        note: "Formado por la acumulación y compresión de bosques pantanosos durante millones de años (especialmente en el período Carbonífero)."
+      },
+      {
+        id: "cobre", name: "Cobre", color: "#c2410c", accent: "#fdba74",
+        env: "igneo", envLabel: "Yacimientos porfídicos e hidrotermales",
+        region: "Cordillera de los Andes (Chile y Perú), EE. UU. y R. D. del Congo",
+        depth: "Entre 100 m y más de 1.500 m en cortezas cordilleranas",
+        extract: "cielo_abierto", extractLabel: "Grandes tajos a cielo abierto y minería subterránea",
+        yields: "Calcopirita, bornita y malaquita (requiere concentración y fundición)",
+        use: "industria", usesText: "Cableado eléctrico, motores, energías renovables, tuberías y aleaciones (bronce, latón).",
+        precautions: "Demanda gestión cuidadosa del agua en zonas áridas andinas y control de drenaje ácido de roca.",
+        note: "Segundo mejor conductor eléctrico entre los metales comerciales después de la plata."
+      },
+      {
+        id: "hierro", name: "Hierro", color: "#7f1d1d", accent: "#fca5a5",
+        env: "sedimentario", envLabel: "Formaciones de Hierro Bandeado (BIF)",
+        region: "Australia Occidental, Brasil (Carajás), China e India",
+        depth: "Superficial a 600 m en cratones continentales antiguos",
+        extract: "cielo_abierto", extractLabel: "Extracción a cielo abierto a gran escala",
+        yields: "Hematita y magnetita (menas de óxido de hierro)",
+        use: "industria", usesText: "Fabricación de acero estructural para edificios, puentes, transporte y maquinaria.",
+        precautions: "El alto horno siderúrgico requiere reducir emisiones mediante acero verde con hidrógeno.",
+        note: "Constituye cerca del 5% de la corteza terrestre y la mayor parte del núcleo del planeta."
+      },
+      {
+        id: "oro", name: "Oro", color: "#ca8a04", accent: "#fde047",
+        env: "igneo", envLabel: "Vetas hidrotermales de cuarzo y depósitos aluviales",
+        region: "China, Australia, Rusia, Canadá, Perú y Sudáfrica",
+        depth: "Desde placeres fluviales superficiales hasta 4.000 m (Witwatersrand)",
+        extract: "subterranea", extractLabel: "Galerías profundas, tajos y lavado aluvial",
+        yields: "Oro nativo en pepitas o diseminado microscópico",
+        use: "joyeria", usesText: "Microelectrónica de alta fiabilidad, aeroespacial, reservas financieras y joyería.",
+        precautions: "La minería ilegal con mercurio contamina ríos; la minería formal usa circuitos cerrados bajo estricta regulación.",
+        note: "No se oxida ni corroe jamás, lo que lo hace insustituible en contactos electrónicos."
+      },
+      {
+        id: "litio", name: "Litio", color: "#0284c7", accent: "#bae6fd",
+        env: "sedimentario", envLabel: "Salares endorreicos y pegmatitas graníticas",
+        region: "Triángulo del Litio (Argentina, Bolivia, Chile) y Australia",
+        depth: "Salmueras a 30-400 m bajo costras salinas o roca dura superficial",
+        extract: "cielo_abierto", extractLabel: "Bombeo de salmuera o minería de espodumeno",
+        yields: "Carbonato e hidróxido de litio (tras evaporación y refinación química)",
+        use: "energia", usesText: "Baterías recargables de vehículos eléctricos, teléfonos, redes solares y cerámica.",
+        precautions: "Requiere monitoreo hidrogeológico del balance entre salmuera y agua dulce en ecosistemas altoandinos.",
+        note: "Es el metal más ligero de la tabla periódica; requiere refinación química para alcanzar grado batería."
+      },
+      {
+        id: "lapislazuli", name: "Lapislázuli", color: "#1d4ed8", accent: "#93c5fd",
+        env: "metamorfico", envLabel: "Calizas cristalinas metamorfizadas por contacto",
+        region: "Badajshán (Afganistán), Andes de Chile y Lago Baikal (Rusia)",
+        depth: "Afloramientos montañosos escarpados (2.000 - 3.500 m s. n. m.)",
+        extract: "subterranea", extractLabel: "Extracción selectiva en socavones de montaña",
+        yields: "Roca compuesta por lazurita, calcita y pirita dorada",
+        use: "joyeria", usesText: "Orfebrería, escultura ornamental y pigmento azul ultramar histórico.",
+        precautions: "Extracción artesanal en zonas montañosas remotas con riesgos de desprendimientos.",
+        note: "Durante el Renacimiento, el pigmento obtenido del lapislázuli valía más que el oro."
+      },
+      {
+        id: "diamante", name: "Diamante", color: "#0f766e", accent: "#99f6e4",
+        env: "metamorfico", envLabel: "Chimeneas volcánicas de kimberlita de gran profundidad",
+        region: "Botsuana, Rusia, Canadá, Angola y Sudáfrica",
+        depth: "Se forma a 140-190 km en el manto y asciende por erupciones antiguas",
+        extract: "subterranea", extractLabel: "Tajos circulares profundos y túneles subterráneos",
+        yields: "Carbono puro cristalizado en estructura cúbica",
+        use: "joyeria", usesText: "Brocas de perforación geológica, corte de precisión, láseres y joyería.",
+        precautions: "Certificación internacional (Proceso de Kimberley) para evitar el comercio de minerales de conflicto.",
+        note: "Posee la máxima dureza (10 en la escala de Mohs) entre los minerales naturales."
+      },
+      {
+        id: "esmeralda", name: "Esmeralda", color: "#15803d", accent: "#86efac",
+        env: "metamorfico", envLabel: "Vetas hidrotermales en esquistos y lutitas negras",
+        region: "Colombia (Boyacá), Zambia, Brasil y Zimbabue",
+        depth: "Galerías montañosas entre 50 y 500 m de profundidad",
+        extract: "subterranea", extractLabel: "Túneles subterráneos de extracción cuidadosa",
+        yields: "Variedad verde de berilo coloreada por cromo y vanadio",
+        use: "joyeria", usesText: "Alta joyería y colecciones mineralógicas.",
+        precautions: "Los cristales son frágiles a impactos bruscos; requiere minería selectiva sin explosivos pesados.",
+        note: "Las esmeraldas colombianas se formaron en ambientes sedimentarios únicos sin intrusión magmática directa."
+      },
+      {
+        id: "cuarzo", name: "Cuarzo", color: "#7e22ce", accent: "#e9d5ff",
+        env: "igneo", envLabel: "Rocas ígneas, vetas hidrotermales y arenas silíceas",
+        region: "Brasil, Madagascar, EE. UU., España y todo el mundo",
+        depth: "Desde playas y dunas superficiales hasta cavidades geodas profundas",
+        extract: "cielo_abierto", extractLabel: "Canteras de arena silícea y extracción en vetas",
+        yields: "Dióxido de silicio (SiO₂) cristalino o arena de alta pureza",
+        use: "industria", usesText: "Fabricación de vidrio, microchips de silicio, paneles solares y osciladores de relojes.",
+        precautions: "La inhalación prolongada de polvo de sílice fina exige protección respiratoria en canteras.",
+        note: "Su propiedad piezoeléctrica permite medir el tiempo con altísima precisión en relojes y radios."
+      },
+      {
+        id: "tierras_raras", name: "Tierras Raras", color: "#be185d", accent: "#fbcfe8",
+        env: "igneo", envLabel: "Complejos alcalinos, carbonatitas y arcillas iónicas",
+        region: "China (Bayan Obo), Australia, EE. UU. (Mountain Pass) y Brasil",
+        depth: "Yacimientos superficiales a 400 m",
+        extract: "cielo_abierto", extractLabel: "Minería a cielo abierto y lixiviación controlada",
+        yields: "17 elementos (neodimio, disprosio, lantano, cerio, etc.)",
+        use: "energia", usesText: "Imanes permanentes de turbinas eólicas, motores eléctricos, pantallas y fibra óptica.",
+        precautions: "Su separación química es compleja y puede generar residuos ligeramente radiactivos (torio) si no se tratan bien.",
+        note: "No son escasas en la corteza, sino difíciles de encontrar concentradas y costosas de separar químicamente."
+      }
+    ];
+
+    const INSTRUMENTS = [
+      { id: "brujula", name: "Brújula Magnética", cat: "Orientación", icon: "🧭", desc: "Señala el Norte Magnético mediante una aguja imantada. Esencial para medir rumbos (azimut) junto al mapa.", precision: "± 1° a 2°" },
+      { id: "mapa", name: "Mapa Topográfico", cat: "Cartografía", icon: "🗺️", desc: "Representa el relieve con curvas de nivel, ríos, caminos y coordenadas métricas.", precision: "Según escala (ej. 1:25.000)" },
+      { id: "gps", name: "Receptor GNSS / GPS", cat: "Navegación Satelital", icon: "🛰️", desc: "Calcula latitud, longitud y altitud triangulando señales de constelaciones satelitales (GPS, Galileo, GLONASS).", precision: "1 - 5 m (cm con RTK)" },
+      { id: "teodolito", name: "Estación Total / Teodolito", cat: "Topografía", icon: "📐", desc: "Instrumento óptico-electrónico que mide ángulos y distancias con láser para levantamientos precisos.", precision: "Milimétrica" },
+      { id: "barometro", name: "Barómetro / Altímetro", cat: "Meteorología", icon: "🌡️", desc: "Mide la presión atmosférica para estimar cambios de altitud y anticipar frentes de tormenta.", precision: "± 1 hPa / ± 5 m" },
+      { id: "pluviometro", name: "Pluviómetro", cat: "Hidrología", icon: "🌧️", desc: "Recoge y mide la cantidad de precipitación caída en milímetros (1 mm = 1 litro por m²).", precision: "0,2 mm" },
+      { id: "anemometro", name: "Anemómetro", cat: "Meteorología", icon: "💨", desc: "Registra la velocidad del viento (en km/h o nudos) mediante cazoletas giratorias o sensores ultrasónicos.", precision: "± 0,5 km/h" },
+      { id: "clinometro", name: "Clinómetro", cat: "Geomorfología", icon: "⛰️", desc: "Mide el ángulo de inclinación de pendientes, árboles o estratos geológicos.", precision: "± 0,5°" }
+    ];
+
+    const BIOMES = [
+      { name: "Bosque Templado", color: "forest", icon: "🌳", climate: "Cuatro estaciones bien definidas; lluvias moderadas todo el año.", life: "Robles, hayas, ciervos, zorros y aves migratorias.", challenge: "Deforestación histórica por expansión urbana y agrícola." },
+      { name: "Desierto Cálido", color: "terracotta", icon: "🏜️", climate: "Precipitaciones inferiores a 250 mm anuales y gran amplitud térmica día/noche.", life: "Cactáceas, arbustos xerófilos, reptiles, camellos y zorros del desierto.", challenge: "Escasez extrema de agua y avance de la desertificación." },
+      { name: "Selva Tropical", color: "forest", icon: "🌴", climate: "Cálido y muy húmedo todo el año (más de 2.000 mm de lluvia); cerca del Ecuador.", life: "Mayor biodiversidad del planeta: árboles de dosel alto, jaguares, tucanes y anfibios.", challenge: "Tala indiscriminada, incendios y pérdida de suelos frágiles." },
+      { name: "Taiga (Bosque Boreal)", color: "ocean", icon: "🌲", climate: "Inviernos largos y gélidos; veranos cortos y frescos en latitudes altas del norte.", life: "Coníferas (pinos, abetos), alces, lobos y osos pardos.", challenge: "Deshielo del permafrost y grandes incendios forestales." },
+      { name: "Sabana", color: "terracotta", icon: "🦁", climate: "Cálido con una estación lluviosa marcada y otra seca prolongada.", life: "Pastizales altos, acacias, grandes herbívoros (cebras, elefantes) y depredadores.", challenge: "Sequías recurrentes y sobrepastoreo." },
+      { name: "Alta Montaña (Alpino)", color: "ocean", icon: "🏔️", climate: "Frío intenso por la altitud, radiación UV alta, nieve y vientos fuertes.", life: "Pajonales, líquenes, cóndores, vicuñas, cabras montesas y leopardos de las nieves.", challenge: "Retroceso acelerado de glaciares que abastecen ríos." },
+      { name: "Océanos y Zonas Abisales", color: "ocean", icon: "🐋", climate: "Regulan el clima global absorbiendo calor y CO₂; oscuridad total bajo los 1.000 m.", life: "Fitoplancton, arrecifes, ballenas y fauna bioluminiscente abisal.", challenge: "Acidificación, calentamiento marino y contaminación por plásticos." },
+      { name: "Humedales y Pantanos", color: "forest", icon: "🦩", climate: "Suelos inundados permanente o estacionalmente; actúan como esponjas naturales.", life: "Juncos, manglares, flamencos, carpinchos, anfibios y peces.", challenge: "Relleno para urbanización y alteración de cursos fluviales." },
+      { name: "Sistemas Kársticos y Cuevas", color: "terracotta", icon: "🦇", climate: "Temperatura estable y oscuridad total en galerías excavadas por agua en roca caliza.", life: "Murciélagos, insectos cavernícolas ciegos y microorganismos quimiosintéticos.", challenge: "Contaminación rápida de acuíferos subterráneos." }
+    ];
+
+    const WONDERS = [
+      { id: "gran_canon", name: "Gran Cañón del Colorado", region: "America", country: "Estados Unidos (Arizona)", diff: "Accesible", discover: "446 km de garganta excavada por el río Colorado que expone casi 2.000 millones de años de estratos geológicos.", risks: "Golpes de calor en el fondo del cañón, deshidratación y tormentas repentinas.", gear: "Calzado de trekking, 3-4 L de agua, sombrero y mapa de senderos.", value: "Registro estratigráfico único de la historia de la Tierra; Patrimonio Mundial UNESCO.", secret: "La temperatura puede variar más de 15 °C entre el borde superior (2.100 m) y el fondo junto al río." },
+      { id: "amazonas", name: "Cuenca y Selva del Amazonas", region: "America", country: "Brasil, Perú, Colombia y 6 países más", diff: "Moderada", discover: "El sistema fluvial más caudaloso del mundo y la mayor selva tropical continua del planeta.", risks: "Humedad extrema, crecidas estacionales, enfermedades tropicales y desorientación bajo dosel cerrado.", gear: "Ropa ligera de manga larga, repelente, botas impermeables, GPS y guía local.", value: "Produce sus propias lluvias mediante los llamados 'ríos voladores' de evapotranspiración.", secret: "El río Amazonas descarga en el océano Atlántico aproximadamente una quinta parte de toda el agua dulce fluvial de la Tierra." },
+      { id: "sahara", name: "Desierto del Sahara", region: "Africa", country: "Norte de África (11 países)", diff: "Extrema", discover: "El desierto cálido más extenso del planeta (~9,2 millones de km²), combinando ergs de dunas, mesetas rocosas (hamadas) y oasis.", risks: "Tormentas de arena, deshidratación severa y temperaturas superiores a 48 °C.", gear: "Vehículos 4x4 en convoy, navegación satelital, reservas de agua y protección ocular.", value: "El polvo mineral del Sahara viaja por el Atlántico y fertiliza los suelos de la Amazonia.", secret: "Hace apenas 6.000 a 10.000 años ('Sahara Verde'), esta región tenía lagos, ríos y sabanas habitadas." },
+      { id: "himalaya", name: "Cordillera del Himalaya", region: "Asia", country: "Nepal, India, China, Bután y Pakistán", diff: "Extrema", discover: "La cadena montañosa más alta de la Tierra, hogar del Monte Everest (8.848,86 m) y los 14 'ochomiles'.", risks: "Mal agudo de montaña (hipoxia), avalanchas, grietas glaciares y tormentas gélidas.", gear: "Aclimatación progresiva, equipo térmico de alta montaña, crampones y altímetro.", value: "Sus glaciares alimentan grandes ríos asiáticos (Ganges, Indo, Brahmaputra) de los que dependen cientos de millones de personas.", secret: "El Himalaya sigue elevándose unos pocos milímetros cada año debido a la colisión continua entre la placa Índica y la Euroasiática." },
+      { id: "barrera_coral", name: "Gran Barrera de Coral", region: "Oceania", country: "Australia (Queensland)", diff: "Accesible", discover: "El mayor sistema de arrecifes de coral del mundo (más de 2.300 km), visible incluso desde el espacio.", risks: "Corrientes marinas, radiación solar intensa y fauna marina urticante.", gear: "Equipo de snorkel/buceo certificado, protector solar biodegradable y carta náutica.", value: "Refugio de miles de especies de peces, tortugas y moluscos; barrera natural contra marejadas.", secret: "No es una sola roca, sino una estructura viva construida durante milenios por miles de millones de diminutos pólipos de coral." },
+      { id: "marianas", name: "Fosa de las Marianas", region: "Oceania", country: "Océano Pacífico Occidental", diff: "Extrema", discover: "La fosa oceánica más profunda conocida; en el Abismo Challenger alcanza ~10.920 metros de profundidad.", risks: "Presión hidrostática superior a 1.000 atmósferas y oscuridad absoluta.", gear: "Batiscafos tripulados o vehículos submarinos autónomos (ROV) con casco de titanio.", value: "Zona de subducción donde la placa del Pacífico se hunde bajo la placa de las Marianas.", secret: "Si colocaras el Monte Everest en el fondo del Abismo Challenger, su cima quedaría aún a más de 2 km bajo el agua." },
+      { id: "geiseres", name: "Campos Geotérmicos de Islandia y Yellowstone", region: "Europa", country: "Islandia / Estados Unidos", diff: "Accesible", discover: "Géiseres, fumarolas, piscinas termales y volcanes alimentados por calor magmático cercano a la superficie.", risks: "Agua hirviendo (90-100 °C), cortezas minerales frágiles y gases volcánicos.", gear: "Calzado antideslizante, ropa impermeable y respeto estricto a pasarelas señalizadas.", value: "Laboratorios naturales de energía geotérmica y microorganismos extremófilos.", secret: "Islandia aprovecha esta actividad geotérmica para generar cerca del 25% de su electricidad y calefaccionar el 90% de sus hogares." },
+      { id: "uyuni", name: "Salar de Uyuni", region: "America", country: "Bolivia (Potosí)", diff: "Moderada", discover: "El mayor desierto de sal continuo del mundo (10.582 km²) a 3.656 m de altitud.", risks: "Radiación UV extrema reflejada en la sal, frío nocturno y pérdida de referencias visuales sin guía.", gear: "Gafas de sol con filtro UV400, bloqueador solar, abrigo y GPS.", value: "Contiene una de las mayores reservas mundiales de salmuera de litio y antiguos lagos prehistóricos.", secret: "En época de lluvias (enero-marzo), una fina lámina de agua lo convierte en el espejo natural más grande del planeta, usado para calibrar satélites." },
+      { id: "iguazu", name: "Cataratas del Iguazú", region: "America", country: "Argentina (Misiones) y Brasil (Paraná)", diff: "Accesible", discover: "Sistema de 275 saltos de agua de hasta 82 m de altura en medio de la selva paranaense.", risks: "Pasarelas húmedas resbaladizas, crecidas extraordinarias del río y calor húmedo.", gear: "Poncho impermeable, calzado con buen agarre y protección para cámaras.", value: "Escalonamiento basáltico originado por derrames volcánicos del Jurásico-Cretácico.", secret: "La Garganta del Diablo concentra casi la mitad del caudal del río Iguazú en una herradura de 150 m de ancho." },
+      { id: "rift", name: "Gran Valle del Rift", region: "Africa", country: "Desde Etiopía hasta Mozambique", diff: "Moderada", discover: "Una fractura tectónica de más de 6.000 km donde África Oriental se está separando lentamente del resto del continente.", risks: "Actividad volcánica, sismos, lagos alcalinos o con gases volcánicos y calor.", gear: "Vehículo todo terreno, guías locales y equipo de observación geológica.", value: "Cuna de los hallazgos paleoantropológicos más importantes sobre los orígenes humanos.", secret: "Dentro de varios millones de años, el agua del océano inundará esta fractura y creará un nuevo mar." },
+      { id: "fiordos", name: "Fiordos Noruegos (Geiranger y Nærøy)", region: "Europa", country: "Noruega", diff: "Accesible", discover: "Valles profundos en forma de 'U' excavados por glaciares durante la última Edad de Hielo e inundados por el mar.", risks: "Desprendimientos de rocas en paredes verticales y clima marítimo cambiante.", gear: "Ropa cortavientos impermeable, calzado de montaña y cartas de mareas.", value: "Ejemplo clásico de erosión glaciar costera.", secret: "Algunos fiordos noruegos superan los 1.300 metros de profundidad bajo el nivel del mar, mucho más profundos que el mar del Norte vecino." },
+      { id: "son_doong", name: "Cueva Hang Sơn Đoòng", region: "Asia", country: "Vietnam (Quảng Bình)", diff: "Extrema", discover: "La caverna con la galería subterránea de mayor volumen conocida del mundo, con su propia selva y río interior.", risks: "Inundaciones súbitas en temporada de monzones, rápeles verticales y oscuridad total.", gear: "Equipo completo de espeleología, cascos con iluminación potente y expedición autorizada.", value: "Formada hace 2 a 5 millones de años por disolución de roca caliza en una falla tectónica.", secret: "Su galería principal es tan inmensa (hasta 200 m de alto y 150 m de ancho) que podría albergar una manzana entera de rascacielos." }
+    ];
+
+    const URBAN_TYPES = [
+      { level: "Nivel 1 • Rural", name: "Asentamiento Rural Inicial", mat: "Madera local, piedra y barro cocido", adapt: "Ubicado cerca de arroyos y suelos fértiles; baja densidad y autosuficiencia agrícola." },
+      { level: "Nivel 2 • Relieve", name: "Pueblo de Alta Montaña", mat: "Piedra apilada (pirca) y techos inclinados", adapt: "Muros gruesos para inercia térmica y tejados empinados para deslizar la nieve." },
+      { level: "Nivel 3 • Fluvial", name: "Aldea Palafítica", mat: "Pilotes de madera dura y fibras vegetales", adapt: "Construida sobre pilotes en ríos o lagos para adaptarse a crecidas estacionales." },
+      { level: "Nivel 4 • Árido", name: "Oasis y Arquitectura de Tierra", mat: "Adobe, tapial y cal blanca reflectante", adapt: "Calles estrechas sombreadas, patios interiores y canales subterráneos (qanats)." },
+      { level: "Nivel 5 • Histórico", name: "Ciudad Amurallada", mat: "Sillería de piedra y ladrillo", adapt: "Emplazada en colinas o meandros fluviales defensivos con plazas centrales." },
+      { level: "Nivel 6 • Costero", name: "Metrópolis Portuaria", mat: "Acero, hormigón armado y rompeolas", adapt: "Nodos de comercio marítimo global en bahías protegidas y desembocaduras." },
+      { level: "Nivel 7 • Planificado", name: "Ciudad Planificada Moderna", mat: "Zonificación vial, redes subterráneas y parques", adapt: "Trazado geométrico diseñado desde cero para equilibrar transporte y servicios." },
+      { level: "Nivel 8 • Futuro", name: "Ecociudad Sostenible", mat: "Madera laminada, techos verdes y energía solar", adapt: "Transporte público eléctrico, drenaje urbano sostenible y biodiversidad integrada." }
+    ];
+
+    const FAQS = [
+      { q: "¿La Tierra es una esfera perfecta?", a: "No. Debido a su rotación, la Tierra es un geoide ligeramente achatado en los polos y ensanchado en el Ecuador (el radio ecuatorial es unos 21 km mayor que el polar)." },
+      { q: "¿Por qué cambian las estaciones del año?", a: "Por la inclinación del eje terrestre (23,5°) mientras el planeta orbita alrededor del Sol, no por estar más cerca o más lejos del Sol. Cuando es verano en el hemisferio sur, es invierno en el norte." },
+      { q: "¿Qué diferencia hay entre tiempo atmosférico y clima?", a: "El tiempo es el estado de la atmósfera en un momento y lugar concretos (por ejemplo, lluvia hoy a la tarde). El clima es el promedio estadístico de esas condiciones durante al menos 30 años." },
+      { q: "¿Qué es un huso horario?", a: "Es cada una de las 24 franjas en que se divide la Tierra (cada una de ~15° de longitud) para coordinar la hora oficial según la rotación terrestre." },
+      { q: "¿Cómo se miden las alturas sobre el nivel del mar (m s. n. m.)?", a: "Se toma como referencia el nivel medio del mar en mareógrafos oficiales y se mide mediante nivelación topográfica, altimetría satelital y modelos geoidales." },
+      { q: "¿Qué son las placas tectónicas?", a: "Son grandes bloques rígidos de la litosfera que flotan y se desplazan lentamente (unos centímetros por año) sobre la astenosfera, causando terremotos, volcanes y cordilleras." },
+      { q: "¿Dónde consultar mapas e información geográfica oficial?", a: "En portales públicos como el Instituto Geográfico Nacional (IGN), el USGS, NASA Earth Observatory o IDE (Infraestructuras de Datos Espaciales) de cada país." }
+    ];
+
+    const GLOSSARY = [
+      { term: "Latitud", def: "Distancia angular desde cualquier punto de la Tierra hasta el Ecuador (0°), medida hacia el Norte o el Sur." },
+      { term: "Longitud", def: "Distancia angular desde un punto hasta el Meridiano de Greenwich (0°), medida hacia el Este o el Oeste." },
+      { term: "Altitud", def: "Elevación vertical de un punto respecto al nivel medio del mar (m s. n. m.)." },
+      { term: "Cuenca hidrográfica", def: "Territorio cuyas aguas superficiales y subterráneas drenan hacia un mismo río principal, lago o mar." },
+      { term: "Relieve", def: "Conjunto de formas de la corteza terrestre (montañas, mesetas, llanuras, valles y fosas submarinas)." },
+      { term: "Bioma", def: "Gran unidad ecológica caracterizada por un clima, suelo, flora y fauna predominantes." },
+      { term: "Escala", def: "Relación matemática entre una distancia medida en el mapa y su equivalente real en el terreno." },
+      { term: "Proyección cartográfica", def: "Sistema matemático para trasladar la superficie curva de la Tierra a un plano, asumiendo siempre alguna distorsión." },
+      { term: "Meridiano", def: "Semicírculo imaginario que une ambos polos y marca la longitud (el de referencia es Greenwich, 0°)." },
+      { term: "Paralelo", def: "Círculo imaginario perpendicular al eje terrestre que marca la latitud (el mayor es el Ecuador)." }
+    ];
+
+    /* =========================================================================
+       2. ESTADO GLOBAL, AUDIO WEB API Y LOCALSTORAGE
+       ========================================================================= */
+    const state = {
+      favorites: JSON.parse(localStorage.getItem('terra_favs') || '[]'),
+      completedSteps: JSON.parse(localStorage.getItem('terra_steps') || '[]'),
+      gameScore: Number(localStorage.getItem('terra_score
+                                             
